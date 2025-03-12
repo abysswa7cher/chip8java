@@ -1,0 +1,22 @@
+{
+  "build": "release",
+  "mode": "zip",
+  "selectedAddons": [
+    "joml-primitives"
+  ],
+  "platform": [
+    "windows",
+    "windows-x86"
+  ],
+  "descriptions": true,
+  "compact": true,
+  "hardcoded": false,
+  "javadoc": true,
+  "includeJSON": true,
+  "source": true,
+  "osgi": false,
+  "language": "groovy",
+  "preset": "getting-started",
+  "version": "3.3.6",
+  "versionLatest": "3.3.6"
+}
