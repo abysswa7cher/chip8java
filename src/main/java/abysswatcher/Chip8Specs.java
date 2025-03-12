@@ -1,25 +1,20 @@
 package abysswatcher;
-import lombok.Getter;
 
 public class Chip8Specs {
-    @Getter
-    public static final Chip8Specs instance = new Chip8Specs();
-    private Chip8Specs() {}
+    public static final int NUM_KEYS = 16;
+    public static final int TOTAL_RAM = 4096;
+    public static final int STACK_SIZE = 16;
+    public static final int FONTSET_SIZE = 80;
+    public static final int TIMER_MAX = 255;
 
-    public final int NUM_KEYS = 16;
-    public final int TOTAL_RAM = 4096;
-    public final int STACK_SIZE = 16;
-    public final int FONTSET_SIZE = 80;
-    public final int TIMER_MAX = 255;
+    public static final int CHIP8_RAM_START_ADDR = 0x000;
+    public static final int CHIP8_RAM_END_ADDR = 0x1FF;
+    public static final int PROGRAM_START_ADDR = 0x200;
+    public static final int PROGRAM_END_ADDR = 0xFFF;
+    public static final int SCREEN_WIDTH = 64;
+    public static final int SCREEN_HEIGHT = 32;
 
-    public final int CHIP8_RAM_START_ADDR = 0x000;
-    public final int CHIP8_RAM_END_ADDR = 0x1FF;
-    public final int PROGRAM_START_ADDR = 0x200;
-    public final int PROGRAM_END_ADDR = 0xFFF;
-    public final int SCREEN_WIDTH = 64;
-    public final int SCREEN_HEIGHT = 32;
-
-    public static final char[] FONTSET = {
+    public static final int[] FONTSET = {
             0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
             0x20, 0x60, 0x20, 0x20, 0x70, // 1
             0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
