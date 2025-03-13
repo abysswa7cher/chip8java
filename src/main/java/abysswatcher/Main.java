@@ -1,9 +1,11 @@
 package abysswatcher;
 
+import java.io.IOException;
+
 public class Main {
     private long window;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         Logger logger = Logger.getInstance();
         CmdLineParser cmdParser = CmdLineParser.getInstance();
         cmdParser.parseCmdLine(args);

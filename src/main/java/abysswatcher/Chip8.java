@@ -1,9 +1,12 @@
 package abysswatcher;
 
 import lombok.Getter;
+import lombok.Setter;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Scanner;
 
 public class Chip8 {
     private Chip8() {
@@ -12,7 +15,16 @@ public class Chip8 {
     @Getter
     private static final Chip8     instance  = new Chip8();
     private static final Logger    logger    = Logger.getInstance();
-    private static final CPU       cpu       = new CPU();
+    private static final CPU       cpu;
+
+    static {
+        try {
+            cpu = new CPU();
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private static       RomLoader romLoader = new RomLoader();
 
     @Getter
@@ -26,22 +38,27 @@ public class Chip8 {
     @Getter
     private final int[] stack = new int[Chip8Specs.STACK_SIZE];
 
-    private char delay_timer = 0;
-    private char sound_timer = 0;
+    @Getter
+    @Setter
+    private int delay_timer = 0;
+    @Getter
+    @Setter
+    private int sound_timer = 0;
 
     private Boolean emulatorRunning = false;
 
     public void printRAM() {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < ram.length; i++) {
-            if (i % 16 == 0)
+            if (i % 10 == 0)
                 sb.append("\n");
+            sb.append(Integer.toHexString(i).toUpperCase()).append(": ");
             if (ram[i] == 0)
-                sb.append("0x00");
+                sb.append("00");
             else if (ram[i] < 16)
-                sb.append("0x0").append(Integer.toHexString(ram[i]).toUpperCase());
+                sb.append("0").append(Integer.toHexString(ram[i]).toUpperCase());
             else
-                sb.append("0x").append(Integer.toHexString(ram[i]).toUpperCase());
+                sb.append(Integer.toHexString(ram[i]).toUpperCase());
             if (i < ram.length - 1)
                 sb.append(' ');
         }
@@ -55,6 +72,11 @@ public class Chip8 {
             }
             System.out.print("\n");
         }
+    }
+
+    public void clearScreen() {
+        System.out.print("\033[H\033[2J");
+        System.out.flush();
     }
 
 
@@ -94,13 +116,17 @@ public class Chip8 {
         }
     }
 
-    public void run() {
+    public void run() throws IOException {
         emulatorRunning = true;
 
         while (emulatorRunning) {
             cpu.fetch();
             cpu.decode();
             cpu.execute();
+//            int input = System.in.read();
+//
+//            if (input == 'q')
+//                emulatorRunning = false;
         }
     }
 
