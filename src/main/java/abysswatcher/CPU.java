@@ -1,10 +1,10 @@
 package abysswatcher;
 
+import lombok.Getter;
 import lombok.SneakyThrows;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.PrintWriter;
 import java.util.Arrays;
 
 public class CPU {
@@ -16,11 +16,15 @@ public class CPU {
     }
 
     public File dump;
+    public int  programSize;
 
     // registers
+    @Getter
     private int[] registers;
-    public void printRegisters() {
+
+    public String printRegisters() {
         StringBuilder sb = new StringBuilder();
+        sb.append("Registers: ");
         for (int i = 0; i < registers.length; i++) {
             if (i % 4 == 0)
                 sb.append("\n");
@@ -33,39 +37,50 @@ public class CPU {
             if (i < registers.length - 1)
                 sb.append("   ");
         }
-        logger.log("Registers: " + sb, ELogLevel.DEBUG);
+        return sb.toString();
     }
 
-    private int   Iregister;
-    private void printIReg() {
-        logger.log("VI: " + Integer.toHexString(Iregister).toUpperCase() + " [" + Integer.toHexString(machine.getRam()[Iregister]).toUpperCase() + "]", ELogLevel.DEBUG);
+    @Getter
+    private int Iregister;
 
-    }
-
-    private int   PCregister;
-    private void printPCReg() {
-        logger.log("PC: " + Integer.toHexString(PCregister).toUpperCase() + " [" + Integer.toHexString(machine.getRam()[PCregister]).toUpperCase() + " " + Integer.toHexString(machine.getRam()[PCregister+1]).toUpperCase() + "]", ELogLevel.DEBUG);
+    private String printIReg() {
+        return "VI: " + Integer.toHexString(Iregister).toUpperCase() +
+               " [" + Integer.toHexString(machine.getRam()[Iregister]).toUpperCase() + "]";
 
     }
 
-    private int   SPregister;
-    private void printSPReg() {
-        logger.log("SP: " + Integer.toHexString(Iregister).toUpperCase() + " [" + Integer.toHexString(machine.getRam()[SPregister]).toUpperCase() + "]", ELogLevel.DEBUG);
+    @Getter
+    private int PCregister;
+
+    private String printPCReg() {
+        return "PC: " + Integer.toHexString(PCregister).toUpperCase() +
+               " [" + Integer.toHexString(machine.getRam()[PCregister]).toUpperCase() + " " +
+               Integer.toHexString(machine.getRam()[PCregister + 1]).toUpperCase() + "]";
 
     }
 
-    private void printStack() {
-        logger.log("Stack: " + Arrays.toString(machine.getStack()), ELogLevel.DEBUG);
+    @Getter
+    private int SPregister;
+
+    private String printSPReg() {
+        return "SP: " + Integer.toHexString(SPregister).toUpperCase() +
+               " [" + Integer.toHexString(machine.getRam()[SPregister]).toUpperCase() + "]";
+
+    }
+
+    private String printStack() {
+        return "Stack: " + Arrays.toString(machine.getStack());
     }
 
     // helper variables
     private int currentOp          = 0;
     private int currentInstruction = 0;
 
-    private static final Chip8  machine = Chip8.getInstance();
-    private static final Logger logger  = Logger.getInstance();
+    private static final Chip8       machine      = Chip8.getInstance();
+    private static final PrintLogger PRINT_LOGGER = PrintLogger.getInstance();
+    private static final WriteLogger WRITE_LOGGER = WriteLogger.getInstance();
 
-    public void init() throws FileNotFoundException {
+    public void init() {
         PCregister = PC_START;
         SPregister = 0;
         Iregister = 0;
@@ -74,7 +89,7 @@ public class CPU {
 
         registers = new int[NUM_V_REGISTERS];
         Arrays.fill(registers, 0);
-        dump = new File("D:\\projects\\java\\chip8\\dump.txt");
+        dump = new File("./dump.txt");
     }
 
     public void fetch() {
@@ -84,8 +99,8 @@ public class CPU {
 
     public void decode() {
         currentInstruction = currentOp >> 12;
-//        logger.log("Op: " + Integer.toHexString(currentOp).toUpperCase(), ELogLevel.DEBUG);
     }
+
     @SneakyThrows
     public void execute() {
         switch (currentInstruction) {
@@ -128,10 +143,8 @@ public class CPU {
 //                break;
             case 0xD:
                 iDxyn();
-//                machine.clearScreen();
-//                machine.printScreen();
-
-//                System.in.read();
+                machine.clearScreen();
+                machine.printScreen();
                 break;
 //            case 0xE:
 //                break;
@@ -139,29 +152,12 @@ public class CPU {
                 decodeiF();
                 break;
             default:
-                logger.log("Instruction not implemented", ELogLevel.ERROR);
+                PRINT_LOGGER.log("Instruction not implemented", ELogLevel.ERROR);
                 throw new UnsupportedOperationException();
         }
-        try (FileWriter out = new FileWriter(dump, true)) {
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < registers.length; i++) {
-                if (i % 4 == 0)
-                    sb.append("\n");
-                if (registers[i] == 0)
-                    sb.append(Integer.toHexString(i).toUpperCase()).append(": 00");
-                else if (registers[i] < 16)
-                    sb.append(Integer.toHexString(i).toUpperCase()).append(": 0").append(Integer.toHexString(registers[i]).toUpperCase());
-                else
-                    sb.append(Integer.toHexString(i).toUpperCase()).append(": ").append(Integer.toHexString(registers[i]).toUpperCase());
-                if (i < registers.length - 1)
-                    sb.append("   ");
-            }
-            sb.append("\n").append("VI: ").append(Integer.toHexString(Iregister).toUpperCase()).append(" [").append(Integer.toHexString(machine.getRam()[Iregister]).toUpperCase()).append("]");
-            sb.append("\n").append("PC: ").append(Integer.toHexString(PCregister).toUpperCase()).append(" [").append(Integer.toHexString(machine.getRam()[PCregister]).toUpperCase()).append(" ").append(Integer.toHexString(machine.getRam()[PCregister + 1]).toUpperCase()).append("]");
-            sb.append("\n").append("SP: ").append(Integer.toHexString(Iregister).toUpperCase()).append(" [").append(Integer.toHexString(machine.getRam()[SPregister]).toUpperCase()).append("]");
-            sb.append("\n").append("Stack: ").append(Arrays.toString(machine.getStack())).append("\n");
-            out.write(sb);
-        }
+
+        WRITE_LOGGER.log(machine.dumpState(false));
+        PRINT_LOGGER.log(printPCReg() + '\n', ELogLevel.DEBUG);
     }
 
     public void deinit() {
@@ -170,26 +166,31 @@ public class CPU {
 
     // clear the screen //
     private void i00E0() {
-        logger.log("OP 00E0 CLS", ELogLevel.DEBUG);
+        String log = "OP 00E0 CLS";
+        PRINT_LOGGER.log(log, ELogLevel.DEBUG);
+        WRITE_LOGGER.log(log);
         for (int[] row : machine.getScreen())
             Arrays.fill(row, 0);
-        printPCReg();
     }
 
     // return from subroutine to address pulled from stack //
     private void i00EE() {
-        logger.log("OP 00EE RET", ELogLevel.DEBUG);
-        SPregister -= 1;
+        String log = "OP 00EE RET";
+        PRINT_LOGGER.log(log, ELogLevel.DEBUG);
+        WRITE_LOGGER.log(log);
         PCregister = machine.getStack()[SPregister];
-        printPCReg();
+        SPregister -= 1;
+        PRINT_LOGGER.log(printSPReg(), ELogLevel.DEBUG);
     }
 
     // jump to address NNN //
     private void i1nnn() {
         int addr = currentOp & 0x0FFF;
-        logger.log("OP " + currentOp + " JP " + Integer.toHexString(addr).toUpperCase(), ELogLevel.DEBUG);
+        String log = "OP " + Integer.toHexString(currentOp).toUpperCase() + " JP " +
+                     Integer.toHexString(addr).toUpperCase();
+        PRINT_LOGGER.log(log, ELogLevel.DEBUG);
+        WRITE_LOGGER.log(log);
         PCregister = addr;
-        printPCReg();
     }
 
     // push return address onto stack and call subroutine at address NNN //
@@ -199,38 +200,42 @@ public class CPU {
         int[] stack = machine.getStack();
         stack[SPregister] = PCregister;
         PCregister = nnn;
-        logger.log("OP " + Integer.toHexString(currentOp).toUpperCase() +
-                " CALL " + Integer.toHexString(nnn).toUpperCase(),
-                ELogLevel.DEBUG);
-        printPCReg();
-        printStack();
+        String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
+                     " CALL " + Integer.toHexString(nnn).toUpperCase() + "\n" + printPCReg() +
+                     "\n" + printStack();
+        PRINT_LOGGER.log(log, ELogLevel.DEBUG);
+        WRITE_LOGGER.log(log);
+
+        PRINT_LOGGER.log(printSPReg(), ELogLevel.DEBUG);
     }
 
     private void i3xkk() {
         int x = (currentOp >> 8) & 0x0F;
         int kk = currentOp & 0xFF;
-        logger.log("OP " + Integer.toHexString(currentOp).toUpperCase() +
-                " SE V" + Integer.toHexString(x).toUpperCase() +
-                ", " + Integer.toHexString(kk).toUpperCase(),
-                ELogLevel.DEBUG);
+        String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
+                     " SE V" + Integer.toHexString(x).toUpperCase() +
+                     ", " + Integer.toHexString(kk).toUpperCase();
+        PRINT_LOGGER.log(log, ELogLevel.DEBUG);
+        WRITE_LOGGER.log(log);
 
-        printRegisters();
         if (registers[x] == kk)
             PCregister += 2;
-        printPCReg();
+
+        PRINT_LOGGER.log(printRegisters(), ELogLevel.DEBUG);
     }
 
     private void i4xkk() {
         int x = (currentOp >> 8) & 0x0F;
         int kk = currentOp & 0xFF;
-        logger.log("OP " + Integer.toHexString(currentOp).toUpperCase() +
-                        " SNE V" + Integer.toHexString(x).toUpperCase() +
-                        ", " + Integer.toHexString(kk).toUpperCase(),
-                ELogLevel.DEBUG);
-        printRegisters();
+        String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
+                     " SNE V" + Integer.toHexString(x).toUpperCase() +
+                     ", " + Integer.toHexString(kk).toUpperCase();
+        PRINT_LOGGER.log(log, ELogLevel.DEBUG);
+        WRITE_LOGGER.log(log);
+
         if (registers[x] != kk)
             PCregister += 2;
-        printPCReg();
+        PRINT_LOGGER.log(printRegisters(), ELogLevel.DEBUG);
     }
 
     private void i5xy0() {
@@ -238,167 +243,175 @@ public class CPU {
         int y = (currentOp >> 4) & 0x0F;
         int Vx = registers[x];
         int Vy = registers[y];
-        logger.log("OP " + Integer.toHexString(currentOp).toUpperCase() +
-                        " SE V" + Integer.toHexString(x).toUpperCase() +
-                        ", V" + Integer.toHexString(y).toUpperCase(),
-                ELogLevel.DEBUG);
-        printRegisters();
+        String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
+                     " SE V" + Integer.toHexString(x).toUpperCase() +
+                     ", V" + Integer.toHexString(y).toUpperCase();
+        PRINT_LOGGER.log(log, ELogLevel.DEBUG);
+        WRITE_LOGGER.log(log);
+
+        PRINT_LOGGER.log(printRegisters(), ELogLevel.DEBUG);
         if (Vx == Vy)
             PCregister += 2;
-        printPCReg();
     }
 
 
     private void i6xkk() {
         int x = (currentOp >> 8) & 0x0F;
         int kk = currentOp & 0xFF;
-        logger.log("OP " + Integer.toHexString(currentOp).toUpperCase() +
-                        " LD V" + Integer.toHexString(x).toUpperCase() +
-                        ", " + Integer.toHexString(kk).toUpperCase(),
-                ELogLevel.DEBUG);
+        String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
+                     " LD V" + Integer.toHexString(x).toUpperCase() +
+                     ", " + Integer.toHexString(kk).toUpperCase();
+        PRINT_LOGGER.log(log, ELogLevel.DEBUG);
+        WRITE_LOGGER.log(log);
+
         registers[x] = kk;
-        printRegisters();
-        printPCReg();
+        PRINT_LOGGER.log(printRegisters(), ELogLevel.DEBUG);
     }
 
     private void i7xkk() {
         int x = (currentOp >> 8) & 0x0F;
         int kk = currentOp & 0xFF;
-        logger.log("OP " + Integer.toHexString(currentOp).toUpperCase() +
-                        " LD V" + Integer.toHexString(x).toUpperCase() +
-                        ", " + Integer.toHexString(kk).toUpperCase(),
-                ELogLevel.DEBUG);
-        registers[x] += kk;
-        printRegisters();
-        printPCReg();
+        String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
+                     " ADD V" + Integer.toHexString(x).toUpperCase() +
+                     ", " + Integer.toHexString(kk).toUpperCase();
+        PRINT_LOGGER.log(log, ELogLevel.DEBUG);
+        WRITE_LOGGER.log(log);
+
+        registers[x] = ((registers[x] & 0xFF) + (kk & 0xFF)) & 0xFF;
+
+        PRINT_LOGGER.log(printRegisters(), ELogLevel.DEBUG);
     }
 
     private void i8xy0() {
         int x = (currentOp >> 8) & 0x0F;
         int y = (currentOp >> 4) & 0x0F;
-        logger.log("OP " + Integer.toHexString(currentOp).toUpperCase() +
-                        " LD V" + Integer.toHexString(x).toUpperCase() +
-                        ", V" + Integer.toHexString(y).toUpperCase(),
-                ELogLevel.DEBUG);
+        String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
+                     " LD V" + Integer.toHexString(x).toUpperCase() +
+                     ", V" + Integer.toHexString(y).toUpperCase();
+        PRINT_LOGGER.log(log, ELogLevel.DEBUG);
+        WRITE_LOGGER.log(log);
         registers[x] = registers[y];
     }
 
     private void i8xy1() {
         int x = (currentOp >> 8) & 0x0F;
         int y = (currentOp >> 4) & 0x0F;
-        logger.log("OP " + Integer.toHexString(currentOp).toUpperCase() +
-                        " OR V" + Integer.toHexString(x).toUpperCase() +
-                        ", V" + Integer.toHexString(y).toUpperCase(),
-                ELogLevel.DEBUG);
+        String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
+                     " OR V" + Integer.toHexString(x).toUpperCase() +
+                     ", V" + Integer.toHexString(y).toUpperCase();
+        PRINT_LOGGER.log(log, ELogLevel.DEBUG);
+        WRITE_LOGGER.log(log);
 
         registers[x] |= registers[y];
-        printRegisters();
-        printPCReg();
+        PRINT_LOGGER.log(printRegisters(), ELogLevel.DEBUG);
     }
 
     private void i8xy2() {
         int x = (currentOp >> 8) & 0x0F;
         int y = (currentOp >> 4) & 0x0F;
 
-        logger.log("OP " + Integer.toHexString(currentOp).toUpperCase() +
-                        " AND V" + Integer.toHexString(x).toUpperCase() +
-                        ", V" + Integer.toHexString(y).toUpperCase(),
-                ELogLevel.DEBUG);
+        String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
+                     " AND V" + Integer.toHexString(x).toUpperCase() +
+                     ", V" + Integer.toHexString(y).toUpperCase();
+        PRINT_LOGGER.log(log, ELogLevel.DEBUG);
+        WRITE_LOGGER.log(log);
 
         registers[x] &= registers[y];
-        printRegisters();
-        printPCReg();
+        PRINT_LOGGER.log(printRegisters(), ELogLevel.DEBUG);
     }
 
     private void i8xy3() {
         int x = (currentOp >> 8) & 0x0F;
         int y = (currentOp >> 4) & 0x0F;
 
-        logger.log("OP " + Integer.toHexString(currentOp).toUpperCase() +
-                        " XOR V" + Integer.toHexString(x).toUpperCase() +
-                        ", V" + Integer.toHexString(y).toUpperCase(),
-                ELogLevel.DEBUG);
+        String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
+                     " XOR V" + Integer.toHexString(x).toUpperCase() +
+                     ", V" + Integer.toHexString(y).toUpperCase();
+        PRINT_LOGGER.log(log, ELogLevel.DEBUG);
+        WRITE_LOGGER.log(log);
 
         registers[x] ^= registers[y];
-        printRegisters();
-        printPCReg();
+        PRINT_LOGGER.log(printRegisters(), ELogLevel.DEBUG);
     }
 
     private void i8xy4() {
         int x = (currentOp >> 8) & 0x0F;
         int y = (currentOp >> 4) & 0x0F;
 
-        logger.log("OP " + Integer.toHexString(currentOp).toUpperCase() +
-                        " ADD V" + Integer.toHexString(x).toUpperCase() +
-                        ", V" + Integer.toHexString(y).toUpperCase(),
-                ELogLevel.DEBUG);
+        String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
+                     " ADD V" + Integer.toHexString(x).toUpperCase() +
+                     ", V" + Integer.toHexString(y).toUpperCase();
+        PRINT_LOGGER.log(log, ELogLevel.DEBUG);
+        WRITE_LOGGER.log(log);
 
         int res = registers[x] + registers[y];
         registers[0xF] = res > 255 ? 1 : 0;
 
         registers[x] = res & 0xFF;
-        printRegisters();
-        printPCReg();
+        PRINT_LOGGER.log(printRegisters(), ELogLevel.DEBUG);
     }
 
     private void i8xy5() {
         int x = (currentOp >> 8) & 0x0F;
         int y = (currentOp >> 4) & 0x0F;
 
-        logger.log("OP " + Integer.toHexString(currentOp).toUpperCase() +
-                        " SUB V" + Integer.toHexString(x).toUpperCase() +
-                        ", V" + Integer.toHexString(y).toUpperCase(),
-                ELogLevel.DEBUG);
+        String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
+                     " SUB V" + Integer.toHexString(x).toUpperCase() +
+                     ", V" + Integer.toHexString(y).toUpperCase();
+        PRINT_LOGGER.log(log, ELogLevel.DEBUG);
+        WRITE_LOGGER.log(log);
 
-        registers[0xF] = registers[x] > registers[y] ? 1 : 0;
+        registers[0xF] = registers[y] > registers[x] ? 1 : 0;
+        System.out.println(
+                registers[y] + "-" + registers[x] + " = " + (registers[y] - registers[x]));
+        registers[x] = (registers[x] - registers[y] + 256) & 0xFF;
 
-        registers[x] -= registers[y];
-        printRegisters();
-        printPCReg();
+        PRINT_LOGGER.log(printRegisters(), ELogLevel.DEBUG);
     }
 
     private void i8xy6() {
         int x = (currentOp >> 8) & 0x0F;
 
-        logger.log("OP " + Integer.toHexString(currentOp).toUpperCase() +
-                        " SHR V" + Integer.toHexString(x).toUpperCase() +
-                        ", " + Integer.toHexString(1).toUpperCase(),
-                ELogLevel.DEBUG);
+        String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
+                     " SHR V" + Integer.toHexString(x).toUpperCase() +
+                     ", " + Integer.toHexString(1).toUpperCase();
+        PRINT_LOGGER.log(log, ELogLevel.DEBUG);
+        WRITE_LOGGER.log(log);
 
         registers[0xF] = registers[x] % 2 == 1 ? 1 : 0;
 
-        registers[x] >>= 1;
-        printRegisters();
-        printPCReg();
+        registers[x] = (registers[x] >>> 1) & 0xFF;
+        PRINT_LOGGER.log(printRegisters(), ELogLevel.DEBUG);
     }
 
     private void i8xy7() {
         int x = (currentOp >> 8) & 0x0F;
         int y = (currentOp >> 4) & 0x0F;
-        logger.log("OP " + Integer.toHexString(currentOp).toUpperCase() +
-                        " SUBN V" + Integer.toHexString(x).toUpperCase() +
-                        ", V" + Integer.toHexString(y).toUpperCase(),
-                ELogLevel.DEBUG);
+
+        String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
+                     " SUBN V" + Integer.toHexString(x).toUpperCase() +
+                     ", V" + Integer.toHexString(y).toUpperCase();
+        PRINT_LOGGER.log(log, ELogLevel.DEBUG);
+        WRITE_LOGGER.log(log);
 
         registers[0xF] = registers[y] > registers[x] ? 1 : 0;
-        int res = registers[y] - registers[x];
-        registers[x] = res;
-        printRegisters();
-        printPCReg();
+        registers[x] = (registers[y] - registers[x] + 256) & 0xFF;
+        PRINT_LOGGER.log(printRegisters(), ELogLevel.DEBUG);
     }
 
     private void i8xyE() {
         int x = (currentOp >> 8) & 0x0F;
-        logger.log("OP " + Integer.toHexString(currentOp).toUpperCase() +
-                        " SHL V" + Integer.toHexString(x).toUpperCase() +
-                        ", " + Integer.toHexString(1).toUpperCase(),
-                ELogLevel.DEBUG);
+
+        String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
+                     " SHL V" + Integer.toHexString(x).toUpperCase() +
+                     ", " + Integer.toHexString(1).toUpperCase();
+        PRINT_LOGGER.log(log, ELogLevel.DEBUG);
+        WRITE_LOGGER.log(log);
 
         registers[0xF] = registers[x] % 2 == 1 ? 1 : 0;
 
-        registers[x] <<= 1;
-        printRegisters();
-        printPCReg();
+        registers[x] = (registers[x] << 1) & 0xFF;
+        PRINT_LOGGER.log(printRegisters(), ELogLevel.DEBUG);
     }
 
 
@@ -407,25 +420,28 @@ public class CPU {
         int y = (currentOp >> 4) & 0x0F;
         int Vx = registers[x];
         int Vy = registers[y];
-        logger.log("OP " + Integer.toHexString(currentOp).toUpperCase() +
-                        " SNE V" + Integer.toHexString(x).toUpperCase() +
-                        ", V" + Integer.toHexString(y).toUpperCase(),
-                ELogLevel.DEBUG);
+
+        String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
+                     " SNE V" + Integer.toHexString(x).toUpperCase() +
+                     ", V" + Integer.toHexString(y).toUpperCase();
+        PRINT_LOGGER.log(log, ELogLevel.DEBUG);
+        WRITE_LOGGER.log(log);
+
         if (Vx != Vy)
             PCregister += 2;
-        printRegisters();
-        printPCReg();
+        PRINT_LOGGER.log(printRegisters(), ELogLevel.DEBUG);
     }
 
     private void iAnnn() {
         int addr = currentOp & 0xFFF;
-        logger.log("OP " + Integer.toHexString(currentOp).toUpperCase() +
-                        " LD VI" +
-                        ", " + Integer.toHexString(addr).toUpperCase(),
-                ELogLevel.DEBUG);
+
+        String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
+                     " LD VI" +
+                     ", " + Integer.toHexString(addr).toUpperCase();
+        PRINT_LOGGER.log(log, ELogLevel.DEBUG);
+        WRITE_LOGGER.log(log);
         Iregister = addr;
-        printIReg();
-        printPCReg();
+        PRINT_LOGGER.log(printIReg(), ELogLevel.DEBUG);
     }
 
     private void iDxyn() {
@@ -436,16 +452,17 @@ public class CPU {
         int y = registers[iVy] % 32;
         int n = currentOp & 0x000F;
 
-        logger.log("OP " + Integer.toHexString(currentOp).toUpperCase() + " DRAW 8x" + n +
-                        " at (" + x + ", " + y + ")",
-                ELogLevel.DEBUG);
+        String log = "OP " + Integer.toHexString(currentOp).toUpperCase() + " DRAW 8x" + n +
+                     " at (" + x + ", " + y + ")";
+        PRINT_LOGGER.log(log, ELogLevel.DEBUG);
+        WRITE_LOGGER.log(log);
 
         registers[0xF] = 0;
         int[][] screen = machine.getScreen();
 
         for (int i = 0; i < n; i++) {
             int pixel = machine.getRam()[Iregister + i];
-            logger.log("Px: " + Integer.toHexString(pixel).toUpperCase(), ELogLevel.DEBUG);
+            PRINT_LOGGER.log("Px: " + Integer.toHexString(pixel).toUpperCase(), ELogLevel.DEBUG);
             for (int j = 0; j < 8; j++) {
                 if ((pixel & (0x80 >> j)) != 0) {
                     if (screen[y + i][x + j] == 1)
@@ -455,8 +472,7 @@ public class CPU {
                 }
             }
         }
-        printIReg();
-        printPCReg();
+        PRINT_LOGGER.log(printIReg(), ELogLevel.DEBUG);
     }
 
     private void iFx07() {
@@ -471,12 +487,14 @@ public class CPU {
         if (i >= 0)
             registers[x] = i;
         else
-            logger.log("Invalid input: " + (char) i, ELogLevel.ERROR);
+            PRINT_LOGGER.log("Invalid input: " + (char) i, ELogLevel.ERROR);
     }
+
     private void iFx15() {
         int x = (currentOp >> 8) & 0x0F;
         machine.setDelay_timer(registers[x]);
     }
+
     private void iFx18() {
         int x = (currentOp >> 8) & 0x0F;
         machine.setSound_timer(registers[x]);
@@ -484,30 +502,76 @@ public class CPU {
 
     private void iFx1E() {
         int x = (currentOp >> 8) & 0x0F;
+        String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
+                     " ADD I, V" + Integer.toHexString(x).toUpperCase();
+        PRINT_LOGGER.log(log, ELogLevel.DEBUG);
+        WRITE_LOGGER.log(log);
         Iregister += registers[x];
     }
+
     private void iFx29() {
         int x = (currentOp >> 8) & 0x0F;
-        Iregister = registers[(x * 8) % Chip8Specs.FONTSET_SIZE];
+
+        String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
+                     " LD F, V" + Integer.toHexString(x).toUpperCase();
+        PRINT_LOGGER.log(log, ELogLevel.DEBUG);
+        WRITE_LOGGER.log(log);
+        Iregister = registers[x] * 0x5;
+        PRINT_LOGGER.log(printIReg(), ELogLevel.DEBUG);
     }
 
     private void iFx33() {
         int x = (currentOp >> 8) & 0x0F;
 
-        machine.getRam()[Iregister] = (registers[x] >> 8) & 0x0F;
-        machine.getRam()[Iregister + 1] = (registers[x] >> 4) & 0x0F;
-        machine.getRam()[Iregister + 2] = registers[x] & 0x0F;
+        String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
+                     " LD B, V" + Integer.toHexString(x).toUpperCase();
+        PRINT_LOGGER.log(log, ELogLevel.DEBUG);
+        WRITE_LOGGER.log(log);
+
+        machine.getRam()[Iregister] = registers[x] / 100;
+        machine.getRam()[Iregister + 1] = (registers[x]) / 10 % 10;
+        machine.getRam()[Iregister + 2] = (registers[x] % 100) % 10;
+        String res = Arrays.toString(Arrays.copyOfRange(machine.getRam(), Iregister,
+                                                        Iregister + 2));
+        PRINT_LOGGER.log(res, ELogLevel.DEBUG);
+        WRITE_LOGGER.log(res);
     }
 
     private void iFx55() {
         int x = (currentOp >> 8) & 0x0F;
 
-        System.arraycopy(registers, 0, machine.getRam(), Iregister, x);
+        String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
+                     " LD [I], V" + Integer.toHexString(x).toUpperCase();
+        PRINT_LOGGER.log(log, ELogLevel.DEBUG);
+        WRITE_LOGGER.log(log);
+
+        for (int i = 0; i <= x; i++) {
+            PRINT_LOGGER.log(
+                    "Copying V" + i + " [" + Integer.toHexString(registers[i]).toUpperCase() + "]" +
+                    " to I[" + Iregister + i + "]", ELogLevel.DEBUG);
+            machine.getRam()[Iregister + i] = registers[i];
+        }
+        PRINT_LOGGER.log(printRegisters(), ELogLevel.DEBUG);
+        WRITE_LOGGER.log(printRegisters());
     }
 
     private void iFx65() {
         int x = (currentOp >> 8) & 0x0F;
-        System.arraycopy(machine.getRam(), Iregister, registers, 0, x);
+        String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
+                     " LD V" + Integer.toHexString(x).toUpperCase() +
+                     ", [I]";
+        PRINT_LOGGER.log(log, ELogLevel.DEBUG);
+        WRITE_LOGGER.log(log);
+
+        for (int i = 0; i <= x; i++) {
+            PRINT_LOGGER.log(
+                    "Copying V" + i + " from " + Integer.toHexString(Iregister + i).toUpperCase() +
+                    " to V" + x, ELogLevel.DEBUG);
+            registers[i] = machine.getRam()[Iregister + i];
+        }
+
+        PRINT_LOGGER.log(printRegisters(), ELogLevel.DEBUG);
+        WRITE_LOGGER.log(printRegisters());
     }
 
     private void decodei0() {
@@ -520,33 +584,46 @@ public class CPU {
                     i00EE();
                     break;
                 default:
-                    logger.log("Instruction 0 with code " + (currentOp & 0xFF), ELogLevel.ERROR);
+                    PRINT_LOGGER.log(
+                            "Instruction 0 with code " + (currentOp & 0xFF), ELogLevel.ERROR);
             }
-
-        } else {
-            logger.log("Instruction " + (currentOp) + "ignored. (SYS)", ELogLevel.WARN);
+        }
+        else {
+            PRINT_LOGGER.log("Instruction " + (currentOp) + "ignored. (SYS)", ELogLevel.WARN);
         }
 
     }
 
+    @SneakyThrows
     private void decodei8() {
         switch (currentOp & 0x0F) {
+            case 0x0:
+                i8xy0();
+                break;
             case 0x1:
                 i8xy1();
+                break;
             case 0x2:
                 i8xy2();
+                break;
             case 0x3:
                 i8xy3();
+                break;
             case 0x4:
                 i8xy4();
+                break;
             case 0x5:
                 i8xy5();
+                break;
             case 0x6:
                 i8xy6();
+                break;
             case 0x7:
                 i8xy7();
+                break;
             case 0xE:
                 i8xyE();
+                break;
         }
     }
 
@@ -554,22 +631,31 @@ public class CPU {
         switch (currentOp & 0xFF) {
             case 0x07:
                 iFx07();
+                break;
             case 0x0A:
                 iFx0A();
+                break;
             case 0x15:
                 iFx15();
+                break;
             case 0x18:
                 iFx18();
+                break;
             case 0x1E:
                 iFx1E();
+                break;
             case 0x29:
                 iFx29();
+                break;
             case 0x33:
                 iFx33();
+                break;
             case 0x55:
                 iFx55();
+                break;
             case 0x65:
                 iFx65();
+                break;
         }
     }
 }

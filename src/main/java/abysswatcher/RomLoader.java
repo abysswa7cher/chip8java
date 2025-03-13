@@ -10,10 +10,10 @@ public class RomLoader {
     public RomLoader() {
     }
 
-    private static final Logger logger = Logger.getInstance();
+    private static final PrintLogger PRINT_LOGGER = PrintLogger.getInstance();
 
-    public void loadRom(String path, int[] mem, int addr) throws IOException {
-        logger.log("Loading ROM: " + path, ELogLevel.INFO);
+    public int loadRom(String path, int[] mem, int addr) throws IOException {
+        PRINT_LOGGER.log("Loading ROM: " + path, ELogLevel.INFO);
 
         File rom = new File(path);
         int[] data = new int[(int) rom.length()];
@@ -26,16 +26,18 @@ public class RomLoader {
         }
 
         if (data.length == 0) {
-            logger.log("Failed to load ROM: " + path, ELogLevel.ERROR);
+            PRINT_LOGGER.log("Failed to load ROM: " + path, ELogLevel.ERROR);
             throw new RuntimeException();
         }
 
 
-        logger.log("ROM loaded successfully. Size: " + data.length + " bytes.", ELogLevel.INFO);
-        logger.log("Data:", ELogLevel.DEBUG);
-        logger.log(Arrays.toString(data), ELogLevel.DEBUG);
+        PRINT_LOGGER.log(
+                "ROM loaded successfully. Size: " + data.length + " bytes.", ELogLevel.INFO);
+        PRINT_LOGGER.log("Data:", ELogLevel.DEBUG);
+        PRINT_LOGGER.log(Arrays.toString(data), ELogLevel.DEBUG);
 
         System.arraycopy(data, 0, mem, addr, data.length);
+        return data.length;
     }
 
 }

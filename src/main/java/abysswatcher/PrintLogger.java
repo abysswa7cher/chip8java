@@ -4,12 +4,12 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Setter
-public class Logger {
-    private ELogLevel logLevel = ELogLevel.DEBUG;
+public class PrintLogger extends ILogger {
+    private              ELogLevel   logLevel = ELogLevel.DEBUG;
     @Getter
-    private static final Logger instance = new Logger();
+    private static final PrintLogger instance = new PrintLogger();
 
-    private Logger() {}
+    private PrintLogger() {}
 
     public void log(String message, ELogLevel logLevel) {
         StringBuilder sb = new StringBuilder();

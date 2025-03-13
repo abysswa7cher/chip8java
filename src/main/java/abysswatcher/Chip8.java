@@ -6,16 +6,16 @@ import lombok.Setter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Scanner;
 
 public class Chip8 {
-    private Chip8() {
-    }
+    private Chip8() {}
 
     @Getter
-    private static final Chip8     instance  = new Chip8();
-    private static final Logger    logger    = Logger.getInstance();
-    private static final CPU       cpu;
+    private static final Chip8       instance     = new Chip8();
+    private static final PrintLogger PRINT_LOGGER = PrintLogger.getInstance();
+    private static final WriteLogger WRITE_LOGGER = WriteLogger.getInstance();
+
+    private static final CPU cpu;
 
     static {
         try {
@@ -25,7 +25,7 @@ public class Chip8 {
         }
     }
 
-    private static       RomLoader romLoader = new RomLoader();
+    private static RomLoader romLoader = new RomLoader();
 
     @Getter
     private final int[][] screen = new int[Chip8Specs.SCREEN_HEIGHT][Chip8Specs.SCREEN_WIDTH];
@@ -45,24 +45,70 @@ public class Chip8 {
     @Setter
     private int sound_timer = 0;
 
-    private Boolean emulatorRunning = false;
+    public Boolean emulatorRunning = false;
 
-    public void printRAM() {
+    public String dumpState(Boolean withRam) {
+        int[] registers = cpu.getRegisters();
+        int Iregister = cpu.getIregister();
+        int PCregister = cpu.getPCregister();
+        int SPregister = cpu.getSPregister();
+        int[] stack = getStack();
+
+        String IregisterS = Integer.toHexString(Iregister).toUpperCase();
+        String PCregisterS = Integer.toHexString(PCregister).toUpperCase();
+        String SPregisterS = Integer.toHexString(SPregister).toUpperCase();
+        String ramAtI = Integer.toHexString(ram[Iregister]).toUpperCase();
+        String ramAtPC = Integer.toHexString(ram[PCregister]).toUpperCase();
+        String ramAtPC2 = Integer.toHexString(ram[PCregister + 1]).toUpperCase();
+        String ramAtSP = Integer.toHexString(ram[SPregister]).toUpperCase();
+
+
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < ram.length; i++) {
-            if (i % 10 == 0)
+        if (withRam)
+            sb.append(printRAM()).append("\n\n======================================================================\n\n");
+
+        for (int i = 0; i < registers.length; i++) {
+            String ihex = Integer.toHexString(i).toUpperCase();
+            String regval = Integer.toHexString(registers[i]);
+            if (i % 4 == 0)
                 sb.append("\n");
-            sb.append(Integer.toHexString(i).toUpperCase()).append(": ");
-            if (ram[i] == 0)
-                sb.append("00");
-            else if (ram[i] < 16)
-                sb.append("0").append(Integer.toHexString(ram[i]).toUpperCase());
+            if (registers[i] == 0)
+                sb.append(ihex).append(": 00");
+            else if (registers[i] < 16)
+                sb.append(ihex).append(": 0").append(regval);
             else
-                sb.append(Integer.toHexString(ram[i]).toUpperCase());
-            if (i < ram.length - 1)
-                sb.append(' ');
+                sb.append(ihex).append(": ").append(regval);
+            if (i < registers.length - 1)
+                sb.append("   ");
         }
-        logger.log(sb.toString(), ELogLevel.DEBUG);
+
+        sb.append("\n").append("VI: ").append(IregisterS).append(" [").append(ramAtI).append("]").append("\n")
+          .append("PC: ").append(PCregisterS).append(" [").append(ramAtPC).append(" ").append(ramAtPC2).append("]").append("\n")
+          .append("SP: ").append(SPregisterS).append(" [").append(ramAtSP).append("]").append("\n")
+          .append("Stack: ").append(Arrays.toString(stack)).append("\n\n");
+        return sb.toString();
+    }
+
+    public String printRAM() {
+        StringBuilder sb = new StringBuilder();
+        int printCount = 0;
+        for (int i = 0; i < ram.length; i++) {
+            if (ram[i] > 0 || (i >= 512 && i <= 512 + cpu.programSize)) {
+                if (printCount % 10 == 0)
+                    sb.append("\n");
+                sb.append(Integer.toHexString(i).toUpperCase()).append(": ");
+//            if (ram[i] == 0)
+//                sb.append("00");
+                if (ram[i] < 16)
+                    sb.append("0").append(Integer.toHexString(ram[i]).toUpperCase());
+                else
+                    sb.append(Integer.toHexString(ram[i]).toUpperCase());
+                if (i < ram.length - 1)
+                    sb.append(' ');
+                printCount++;
+            }
+        }
+        return sb.toString();
     }
 
     public void printScreen() {
@@ -108,21 +154,27 @@ public class Chip8 {
             romLoader = null;
 
         } catch (IOException e) {
-            logger.log("Failed to read the ROM\n", ELogLevel.ERROR);
+            PRINT_LOGGER.log("Failed to read the ROM\n", ELogLevel.ERROR);
             throw new RuntimeException(e);
         } catch (Exception e) {
-            logger.log("Failed to initialize the Chip8 system\n", ELogLevel.ERROR);
+            PRINT_LOGGER.log("Failed to initialize the Chip8 system\n", ELogLevel.ERROR);
             throw new RuntimeException(e);
         }
+        WRITE_LOGGER.log(
+                printRAM() + "\n\n=======================================================\n\n");
     }
 
     public void run() throws IOException {
         emulatorRunning = true;
-
+        int lastOp = 0;
         while (emulatorRunning) {
             cpu.fetch();
             cpu.decode();
             cpu.execute();
+            if (cpu.getPCregister() == lastOp) emulatorRunning = false;
+            lastOp = cpu.getPCregister();
+//            if (cpu.getPCregister() == 0x49C)
+//                emulatorRunning = false;
 //            int input = System.in.read();
 //
 //            if (input == 'q')

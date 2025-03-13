@@ -7,9 +7,9 @@ import java.util.Arrays;
 
 @ToString
 public class CmdLineParser {
-    private static final Logger logger = Logger.getInstance();
+    private static final PrintLogger PRINT_LOGGER = PrintLogger.getInstance();
     @Getter
-    private String romPath = "";
+    private              String      romPath      = "";
 
     @Getter
     private static final CmdLineParser instance = new CmdLineParser();
@@ -26,26 +26,29 @@ public class CmdLineParser {
 
     public void parseCmdLine(String[] args) {
         int i = 0;
-        logger.log("args: " + Arrays.toString(args), ELogLevel.INFO);
+        PRINT_LOGGER.log("args: " + Arrays.toString(args), ELogLevel.INFO);
         while (i < args.length) {
             if (args[i].charAt(0) == '-') {
                 if (args[i].equals("-h") || args[i].equals("--help")) {
                     printHelpMessage();
                     break;
-                } else if (args[i].equals("-r") || args[i].equals("--romPath")) {
+                }
+                else if (args[i].equals("-r") || args[i].equals("--romPath")) {
                     i++;
                     romPath = args[i];
-                } else if (args[i].equals("-l") || args[i].equals("--logLevel")) {
+                }
+                else if (args[i].equals("-l") || args[i].equals("--logLevel")) {
                     i++;
                     int param = Integer.parseInt(args[i]);
                     if (param > 4 || param < 0) {
-                        logger.log("Parameter must be a number [0, 4]", ELogLevel.ERROR);
+                        PRINT_LOGGER.log("Parameter must be a number [0, 4]", ELogLevel.ERROR);
                         break;
                     }
-                    logger.setLogLevel(ELogLevel.values()[param]);
+                    PRINT_LOGGER.setLogLevel(ELogLevel.values()[param]);
                 }
-            } else {
-                logger.log("Unknown parameter: " + args[i], ELogLevel.ERROR);
+            }
+            else {
+                PRINT_LOGGER.log("Unknown parameter: " + args[i], ELogLevel.ERROR);
             }
             i++;
         }
