@@ -142,7 +142,7 @@ public class CPU {
                 logger.log("Instruction not implemented", ELogLevel.ERROR);
                 throw new UnsupportedOperationException();
         }
-        try (PrintWriter out = new PrintWriter(dump)) {
+        try (FileWriter out = new FileWriter(dump, true)) {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < registers.length; i++) {
                 if (i % 4 == 0)
@@ -159,8 +159,8 @@ public class CPU {
             sb.append("\n").append("VI: ").append(Integer.toHexString(Iregister).toUpperCase()).append(" [").append(Integer.toHexString(machine.getRam()[Iregister]).toUpperCase()).append("]");
             sb.append("\n").append("PC: ").append(Integer.toHexString(PCregister).toUpperCase()).append(" [").append(Integer.toHexString(machine.getRam()[PCregister]).toUpperCase()).append(" ").append(Integer.toHexString(machine.getRam()[PCregister + 1]).toUpperCase()).append("]");
             sb.append("\n").append("SP: ").append(Integer.toHexString(Iregister).toUpperCase()).append(" [").append(Integer.toHexString(machine.getRam()[SPregister]).toUpperCase()).append("]");
-            sb.append("\n").append("Stack: ").append(Arrays.toString(machine.getStack()));
-            out.println(sb);
+            sb.append("\n").append("Stack: ").append(Arrays.toString(machine.getStack())).append("\n");
+            out.write(sb);
         }
     }
 
