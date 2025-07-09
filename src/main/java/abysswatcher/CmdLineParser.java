@@ -9,7 +9,7 @@ import java.util.Arrays;
 public class CmdLineParser {
     private static final PrintLogger PRINT_LOGGER = PrintLogger.getInstance();
     @Getter
-    private              String      romPath      = "";
+    private String romPath = "";
 
     @Getter
     private static final CmdLineParser instance = new CmdLineParser();
@@ -17,40 +17,31 @@ public class CmdLineParser {
     private CmdLineParser() {}
 
     public static void printHelpMessage() {
-        System.out.println("Usage: lcc [options] file...");
-        System.out.println("Options:");
+        System.out.println("Usage: lcc [options] file..."); System.out.println("Options:");
         System.out.println("   -h, --help              Display this help information");
         System.out.println("   -r, --romFileName       Set the rom file path to be used");
-        System.out.println("   -l, --logLevel          Set the desired log level [NONE = 0, ERROR = 1, WARN = 2, INFO = 3, DEBUG = 4]");
+        System.out.println("   -l, --logLevel          Set the desired log level [NONE = 0, ERROR = 1, WARN = 2, " +
+                "INFO" + " = 3, DEBUG = 4]");
     }
 
     public void parseCmdLine(String[] args) {
-        int i = 0;
-        PRINT_LOGGER.log("args: " + Arrays.toString(args), ELogLevel.INFO);
-        while (i < args.length) {
+        int i = 0; PRINT_LOGGER.log("args: " + Arrays.toString(args), ELogLevel.INFO); while (i < args.length) {
             if (args[i].charAt(0) == '-') {
                 if (args[i].equals("-h") || args[i].equals("--help")) {
-                    printHelpMessage();
-                    break;
+                    printHelpMessage(); break;
                 }
                 else if (args[i].equals("-r") || args[i].equals("--romPath")) {
-                    i++;
-                    romPath = args[i];
+                    i++; romPath = args[i];
                 }
                 else if (args[i].equals("-l") || args[i].equals("--logLevel")) {
-                    i++;
-                    int param = Integer.parseInt(args[i]);
-                    if (param > 4 || param < 0) {
-                        PRINT_LOGGER.log("Parameter must be a number [0, 4]", ELogLevel.ERROR);
-                        break;
-                    }
-                    PRINT_LOGGER.setLogLevel(ELogLevel.values()[param]);
+                    i++; int param = Integer.parseInt(args[i]); if (param > 4 || param < 0) {
+                        PRINT_LOGGER.log("Parameter must be a number [0, 4]", ELogLevel.ERROR); break;
+                    } PRINT_LOGGER.setLogLevel(ELogLevel.values()[param]);
                 }
             }
             else {
                 PRINT_LOGGER.log("Unknown parameter: " + args[i], ELogLevel.ERROR);
-            }
-            i++;
+            } i++;
         }
     }
 

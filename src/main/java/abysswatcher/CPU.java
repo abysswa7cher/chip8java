@@ -9,18 +9,28 @@ import java.util.Arrays;
 
 public class CPU {
     private static final int NUM_V_REGISTERS = 16;
-    private static final int PC_START        = 0x200;
+    private static final int PC_START = 0x200;
+    private static final Chip8 machine = Chip8.getInstance();
+    private static final PrintLogger PRINT_LOGGER = PrintLogger.getInstance();
+    private static final WriteLogger WRITE_LOGGER = WriteLogger.getInstance();
+    public File dump;
+    public int programSize;
+    // registers
+    @Getter
+    private int[] registers;
+    @Getter
+    private int Iregister;
+    @Getter
+    private int PCregister;
+    @Getter
+    private int SPregister;
+    // helper variables
+    private int currentOp = 0;
+    private int currentInstruction = 0;
 
     public CPU() throws FileNotFoundException {
         init();
     }
-
-    public File dump;
-    public int  programSize;
-
-    // registers
-    @Getter
-    private int[] registers;
 
     public String printRegisters() {
         StringBuilder sb = new StringBuilder();
@@ -31,54 +41,39 @@ public class CPU {
             if (registers[i] == 0)
                 sb.append(Integer.toHexString(i).toUpperCase()).append(": 00");
             else if (registers[i] < 16)
-                sb.append(Integer.toHexString(i).toUpperCase()).append(": 0").append(Integer.toHexString(registers[i]).toUpperCase());
+                sb.append(Integer.toHexString(i).toUpperCase()).append(": 0")
+                        .append(Integer.toHexString(registers[i]).toUpperCase());
             else
-                sb.append(Integer.toHexString(i).toUpperCase()).append(": ").append(Integer.toHexString(registers[i]).toUpperCase());
+                sb.append(Integer.toHexString(i).toUpperCase()).append(": ")
+                        .append(Integer.toHexString(registers[i]).toUpperCase());
             if (i < registers.length - 1)
                 sb.append("   ");
         }
         return sb.toString();
     }
 
-    @Getter
-    private int Iregister;
-
     private String printIReg() {
         return "VI: " + Integer.toHexString(Iregister).toUpperCase() +
-               " [" + Integer.toHexString(machine.getRam()[Iregister]).toUpperCase() + "]";
+                " [" + Integer.toHexString(machine.getRam()[Iregister]).toUpperCase() + "]";
 
     }
-
-    @Getter
-    private int PCregister;
 
     private String printPCReg() {
         return "PC: " + Integer.toHexString(PCregister).toUpperCase() +
-               " [" + Integer.toHexString(machine.getRam()[PCregister]).toUpperCase() + " " +
-               Integer.toHexString(machine.getRam()[PCregister + 1]).toUpperCase() + "]";
+                " [" + Integer.toHexString(machine.getRam()[PCregister]).toUpperCase() + " " +
+                Integer.toHexString(machine.getRam()[PCregister + 1]).toUpperCase() + "]";
 
     }
 
-    @Getter
-    private int SPregister;
-
     private String printSPReg() {
         return "SP: " + Integer.toHexString(SPregister).toUpperCase() +
-               " [" + Integer.toHexString(machine.getRam()[SPregister]).toUpperCase() + "]";
+                " [" + Integer.toHexString(machine.getRam()[SPregister]).toUpperCase() + "]";
 
     }
 
     private String printStack() {
         return "Stack: " + Arrays.toString(machine.getStack());
     }
-
-    // helper variables
-    private int currentOp          = 0;
-    private int currentInstruction = 0;
-
-    private static final Chip8       machine      = Chip8.getInstance();
-    private static final PrintLogger PRINT_LOGGER = PrintLogger.getInstance();
-    private static final WriteLogger WRITE_LOGGER = WriteLogger.getInstance();
 
     public void init() {
         PCregister = PC_START;
@@ -137,17 +132,17 @@ public class CPU {
             case 0xA:
                 iAnnn();
                 break;
-//            case 0xB:
-//                break;
-//            case 0xC:
-//                break;
+            //            case 0xB:
+            //                break;
+            //            case 0xC:
+            //                break;
             case 0xD:
                 iDxyn();
                 machine.clearScreen();
                 machine.printScreen();
                 break;
-//            case 0xE:
-//                break;
+            //            case 0xE:
+            //                break;
             case 0xF:
                 decodeiF();
                 break;
@@ -187,7 +182,7 @@ public class CPU {
     private void i1nnn() {
         int addr = currentOp & 0x0FFF;
         String log = "OP " + Integer.toHexString(currentOp).toUpperCase() + " JP " +
-                     Integer.toHexString(addr).toUpperCase();
+                Integer.toHexString(addr).toUpperCase();
         PRINT_LOGGER.log(log, ELogLevel.DEBUG);
         WRITE_LOGGER.log(log);
         PCregister = addr;
@@ -201,8 +196,8 @@ public class CPU {
         stack[SPregister] = PCregister;
         PCregister = nnn;
         String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
-                     " CALL " + Integer.toHexString(nnn).toUpperCase() + "\n" + printPCReg() +
-                     "\n" + printStack();
+                " CALL " + Integer.toHexString(nnn).toUpperCase() + "\n" + printPCReg() +
+                "\n" + printStack();
         PRINT_LOGGER.log(log, ELogLevel.DEBUG);
         WRITE_LOGGER.log(log);
 
@@ -213,8 +208,8 @@ public class CPU {
         int x = (currentOp >> 8) & 0x0F;
         int kk = currentOp & 0xFF;
         String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
-                     " SE V" + Integer.toHexString(x).toUpperCase() +
-                     ", " + Integer.toHexString(kk).toUpperCase();
+                " SE V" + Integer.toHexString(x).toUpperCase() +
+                ", " + Integer.toHexString(kk).toUpperCase();
         PRINT_LOGGER.log(log, ELogLevel.DEBUG);
         WRITE_LOGGER.log(log);
 
@@ -228,8 +223,8 @@ public class CPU {
         int x = (currentOp >> 8) & 0x0F;
         int kk = currentOp & 0xFF;
         String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
-                     " SNE V" + Integer.toHexString(x).toUpperCase() +
-                     ", " + Integer.toHexString(kk).toUpperCase();
+                " SNE V" + Integer.toHexString(x).toUpperCase() +
+                ", " + Integer.toHexString(kk).toUpperCase();
         PRINT_LOGGER.log(log, ELogLevel.DEBUG);
         WRITE_LOGGER.log(log);
 
@@ -244,8 +239,8 @@ public class CPU {
         int Vx = registers[x];
         int Vy = registers[y];
         String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
-                     " SE V" + Integer.toHexString(x).toUpperCase() +
-                     ", V" + Integer.toHexString(y).toUpperCase();
+                " SE V" + Integer.toHexString(x).toUpperCase() +
+                ", V" + Integer.toHexString(y).toUpperCase();
         PRINT_LOGGER.log(log, ELogLevel.DEBUG);
         WRITE_LOGGER.log(log);
 
@@ -259,8 +254,8 @@ public class CPU {
         int x = (currentOp >> 8) & 0x0F;
         int kk = currentOp & 0xFF;
         String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
-                     " LD V" + Integer.toHexString(x).toUpperCase() +
-                     ", " + Integer.toHexString(kk).toUpperCase();
+                " LD V" + Integer.toHexString(x).toUpperCase() +
+                ", " + Integer.toHexString(kk).toUpperCase();
         PRINT_LOGGER.log(log, ELogLevel.DEBUG);
         WRITE_LOGGER.log(log);
 
@@ -272,8 +267,8 @@ public class CPU {
         int x = (currentOp >> 8) & 0x0F;
         int kk = currentOp & 0xFF;
         String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
-                     " ADD V" + Integer.toHexString(x).toUpperCase() +
-                     ", " + Integer.toHexString(kk).toUpperCase();
+                " ADD V" + Integer.toHexString(x).toUpperCase() +
+                ", " + Integer.toHexString(kk).toUpperCase();
         PRINT_LOGGER.log(log, ELogLevel.DEBUG);
         WRITE_LOGGER.log(log);
 
@@ -286,8 +281,8 @@ public class CPU {
         int x = (currentOp >> 8) & 0x0F;
         int y = (currentOp >> 4) & 0x0F;
         String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
-                     " LD V" + Integer.toHexString(x).toUpperCase() +
-                     ", V" + Integer.toHexString(y).toUpperCase();
+                " LD V" + Integer.toHexString(x).toUpperCase() +
+                ", V" + Integer.toHexString(y).toUpperCase();
         PRINT_LOGGER.log(log, ELogLevel.DEBUG);
         WRITE_LOGGER.log(log);
         registers[x] = registers[y];
@@ -297,8 +292,8 @@ public class CPU {
         int x = (currentOp >> 8) & 0x0F;
         int y = (currentOp >> 4) & 0x0F;
         String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
-                     " OR V" + Integer.toHexString(x).toUpperCase() +
-                     ", V" + Integer.toHexString(y).toUpperCase();
+                " OR V" + Integer.toHexString(x).toUpperCase() +
+                ", V" + Integer.toHexString(y).toUpperCase();
         PRINT_LOGGER.log(log, ELogLevel.DEBUG);
         WRITE_LOGGER.log(log);
 
@@ -311,8 +306,8 @@ public class CPU {
         int y = (currentOp >> 4) & 0x0F;
 
         String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
-                     " AND V" + Integer.toHexString(x).toUpperCase() +
-                     ", V" + Integer.toHexString(y).toUpperCase();
+                " AND V" + Integer.toHexString(x).toUpperCase() +
+                ", V" + Integer.toHexString(y).toUpperCase();
         PRINT_LOGGER.log(log, ELogLevel.DEBUG);
         WRITE_LOGGER.log(log);
 
@@ -325,8 +320,8 @@ public class CPU {
         int y = (currentOp >> 4) & 0x0F;
 
         String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
-                     " XOR V" + Integer.toHexString(x).toUpperCase() +
-                     ", V" + Integer.toHexString(y).toUpperCase();
+                " XOR V" + Integer.toHexString(x).toUpperCase() +
+                ", V" + Integer.toHexString(y).toUpperCase();
         PRINT_LOGGER.log(log, ELogLevel.DEBUG);
         WRITE_LOGGER.log(log);
 
@@ -339,8 +334,8 @@ public class CPU {
         int y = (currentOp >> 4) & 0x0F;
 
         String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
-                     " ADD V" + Integer.toHexString(x).toUpperCase() +
-                     ", V" + Integer.toHexString(y).toUpperCase();
+                " ADD V" + Integer.toHexString(x).toUpperCase() +
+                ", V" + Integer.toHexString(y).toUpperCase();
         PRINT_LOGGER.log(log, ELogLevel.DEBUG);
         WRITE_LOGGER.log(log);
 
@@ -356,8 +351,8 @@ public class CPU {
         int y = (currentOp >> 4) & 0x0F;
 
         String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
-                     " SUB V" + Integer.toHexString(x).toUpperCase() +
-                     ", V" + Integer.toHexString(y).toUpperCase();
+                " SUB V" + Integer.toHexString(x).toUpperCase() +
+                ", V" + Integer.toHexString(y).toUpperCase();
         PRINT_LOGGER.log(log, ELogLevel.DEBUG);
         WRITE_LOGGER.log(log);
 
@@ -373,8 +368,8 @@ public class CPU {
         int x = (currentOp >> 8) & 0x0F;
 
         String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
-                     " SHR V" + Integer.toHexString(x).toUpperCase() +
-                     ", " + Integer.toHexString(1).toUpperCase();
+                " SHR V" + Integer.toHexString(x).toUpperCase() +
+                ", " + Integer.toHexString(1).toUpperCase();
         PRINT_LOGGER.log(log, ELogLevel.DEBUG);
         WRITE_LOGGER.log(log);
 
@@ -389,8 +384,8 @@ public class CPU {
         int y = (currentOp >> 4) & 0x0F;
 
         String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
-                     " SUBN V" + Integer.toHexString(x).toUpperCase() +
-                     ", V" + Integer.toHexString(y).toUpperCase();
+                " SUBN V" + Integer.toHexString(x).toUpperCase() +
+                ", V" + Integer.toHexString(y).toUpperCase();
         PRINT_LOGGER.log(log, ELogLevel.DEBUG);
         WRITE_LOGGER.log(log);
 
@@ -403,8 +398,8 @@ public class CPU {
         int x = (currentOp >> 8) & 0x0F;
 
         String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
-                     " SHL V" + Integer.toHexString(x).toUpperCase() +
-                     ", " + Integer.toHexString(1).toUpperCase();
+                " SHL V" + Integer.toHexString(x).toUpperCase() +
+                ", " + Integer.toHexString(1).toUpperCase();
         PRINT_LOGGER.log(log, ELogLevel.DEBUG);
         WRITE_LOGGER.log(log);
 
@@ -422,8 +417,8 @@ public class CPU {
         int Vy = registers[y];
 
         String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
-                     " SNE V" + Integer.toHexString(x).toUpperCase() +
-                     ", V" + Integer.toHexString(y).toUpperCase();
+                " SNE V" + Integer.toHexString(x).toUpperCase() +
+                ", V" + Integer.toHexString(y).toUpperCase();
         PRINT_LOGGER.log(log, ELogLevel.DEBUG);
         WRITE_LOGGER.log(log);
 
@@ -436,8 +431,8 @@ public class CPU {
         int addr = currentOp & 0xFFF;
 
         String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
-                     " LD VI" +
-                     ", " + Integer.toHexString(addr).toUpperCase();
+                " LD VI" +
+                ", " + Integer.toHexString(addr).toUpperCase();
         PRINT_LOGGER.log(log, ELogLevel.DEBUG);
         WRITE_LOGGER.log(log);
         Iregister = addr;
@@ -453,7 +448,7 @@ public class CPU {
         int n = currentOp & 0x000F;
 
         String log = "OP " + Integer.toHexString(currentOp).toUpperCase() + " DRAW 8x" + n +
-                     " at (" + x + ", " + y + ")";
+                " at (" + x + ", " + y + ")";
         PRINT_LOGGER.log(log, ELogLevel.DEBUG);
         WRITE_LOGGER.log(log);
 
@@ -503,7 +498,7 @@ public class CPU {
     private void iFx1E() {
         int x = (currentOp >> 8) & 0x0F;
         String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
-                     " ADD I, V" + Integer.toHexString(x).toUpperCase();
+                " ADD I, V" + Integer.toHexString(x).toUpperCase();
         PRINT_LOGGER.log(log, ELogLevel.DEBUG);
         WRITE_LOGGER.log(log);
         Iregister += registers[x];
@@ -513,7 +508,7 @@ public class CPU {
         int x = (currentOp >> 8) & 0x0F;
 
         String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
-                     " LD F, V" + Integer.toHexString(x).toUpperCase();
+                " LD F, V" + Integer.toHexString(x).toUpperCase();
         PRINT_LOGGER.log(log, ELogLevel.DEBUG);
         WRITE_LOGGER.log(log);
         Iregister = registers[x] * 0x5;
@@ -524,7 +519,7 @@ public class CPU {
         int x = (currentOp >> 8) & 0x0F;
 
         String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
-                     " LD B, V" + Integer.toHexString(x).toUpperCase();
+                " LD B, V" + Integer.toHexString(x).toUpperCase();
         PRINT_LOGGER.log(log, ELogLevel.DEBUG);
         WRITE_LOGGER.log(log);
 
@@ -532,7 +527,7 @@ public class CPU {
         machine.getRam()[Iregister + 1] = (registers[x]) / 10 % 10;
         machine.getRam()[Iregister + 2] = (registers[x] % 100) % 10;
         String res = Arrays.toString(Arrays.copyOfRange(machine.getRam(), Iregister,
-                                                        Iregister + 2));
+                Iregister + 2));
         PRINT_LOGGER.log(res, ELogLevel.DEBUG);
         WRITE_LOGGER.log(res);
     }
@@ -541,14 +536,14 @@ public class CPU {
         int x = (currentOp >> 8) & 0x0F;
 
         String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
-                     " LD [I], V" + Integer.toHexString(x).toUpperCase();
+                " LD [I], V" + Integer.toHexString(x).toUpperCase();
         PRINT_LOGGER.log(log, ELogLevel.DEBUG);
         WRITE_LOGGER.log(log);
 
         for (int i = 0; i <= x; i++) {
             PRINT_LOGGER.log(
                     "Copying V" + i + " [" + Integer.toHexString(registers[i]).toUpperCase() + "]" +
-                    " to I[" + Iregister + i + "]", ELogLevel.DEBUG);
+                            " to I[" + Iregister + i + "]", ELogLevel.DEBUG);
             machine.getRam()[Iregister + i] = registers[i];
         }
         PRINT_LOGGER.log(printRegisters(), ELogLevel.DEBUG);
@@ -558,15 +553,15 @@ public class CPU {
     private void iFx65() {
         int x = (currentOp >> 8) & 0x0F;
         String log = "OP " + Integer.toHexString(currentOp).toUpperCase() +
-                     " LD V" + Integer.toHexString(x).toUpperCase() +
-                     ", [I]";
+                " LD V" + Integer.toHexString(x).toUpperCase() +
+                ", [I]";
         PRINT_LOGGER.log(log, ELogLevel.DEBUG);
         WRITE_LOGGER.log(log);
 
         for (int i = 0; i <= x; i++) {
             PRINT_LOGGER.log(
                     "Copying V" + i + " from " + Integer.toHexString(Iregister + i).toUpperCase() +
-                    " to V" + x, ELogLevel.DEBUG);
+                            " to V" + x, ELogLevel.DEBUG);
             registers[i] = machine.getRam()[Iregister + i];
         }
 

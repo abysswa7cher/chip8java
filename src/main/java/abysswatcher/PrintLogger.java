@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Setter
 public class PrintLogger extends ILogger {
-    private              ELogLevel   logLevel = ELogLevel.DEBUG;
+    private ELogLevel logLevel = ELogLevel.DEBUG;
     @Getter
     private static final PrintLogger instance = new PrintLogger();
 

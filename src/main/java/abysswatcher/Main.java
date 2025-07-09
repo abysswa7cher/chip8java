@@ -1,11 +1,13 @@
 package abysswatcher;
 
+import javax.swing.*;
 import java.io.IOException;
 
 public class Main {
     private long window;
 
     public static void main(String[] args) throws IOException {
+        JOptionPane.showMessageDialog(null, "Hello World");
         PrintLogger printLogger = PrintLogger.getInstance();
         CmdLineParser cmdParser = CmdLineParser.getInstance();
         cmdParser.parseCmdLine(args);

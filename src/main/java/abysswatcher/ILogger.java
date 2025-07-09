@@ -1,3 +1,5 @@
 package abysswatcher;
 
-public abstract class ILogger {}
+public abstract class ILogger {
+    public void log(String message) {}
+}
