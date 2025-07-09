@@ -138,7 +138,6 @@ public class CPU {
             //                break;
             case 0xD:
                 iDxyn();
-                machine.clearScreen();
                 machine.printScreen();
                 break;
             //            case 0xE:
@@ -164,8 +163,7 @@ public class CPU {
         String log = "OP 00E0 CLS";
         PRINT_LOGGER.log(log, ELogLevel.DEBUG);
         WRITE_LOGGER.log(log);
-        for (int[] row : machine.getScreen())
-            Arrays.fill(row, 0);
+        machine.clearScreen();
     }
 
     // return from subroutine to address pulled from stack //
@@ -357,8 +355,6 @@ public class CPU {
         WRITE_LOGGER.log(log);
 
         registers[0xF] = registers[y] > registers[x] ? 1 : 0;
-        System.out.println(
-                registers[y] + "-" + registers[x] + " = " + (registers[y] - registers[x]));
         registers[x] = (registers[x] - registers[y] + 256) & 0xFF;
 
         PRINT_LOGGER.log(printRegisters(), ELogLevel.DEBUG);
@@ -454,6 +450,7 @@ public class CPU {
 
         registers[0xF] = 0;
         int[][] screen = machine.getScreen();
+//        machine.clearScreen();
 
         for (int i = 0; i < n; i++) {
             int pixel = machine.getRam()[Iregister + i];
@@ -468,6 +465,7 @@ public class CPU {
             }
         }
         PRINT_LOGGER.log(printIReg(), ELogLevel.DEBUG);
+//        machine.printScreen();
     }
 
     private void iFx07() {

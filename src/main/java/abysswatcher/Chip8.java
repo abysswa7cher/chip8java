@@ -88,6 +88,9 @@ public class Chip8 {
     }
 
     public void printScreen() {
+        char escCode = 0x1B;
+        System.out.printf("%c[%d;%df", escCode, 0, 0);
+
         for (int[] ints : screen) {
             for (int p : ints) {
                 System.out.print(p == 1 ? "0" : " ");
@@ -96,16 +99,17 @@ public class Chip8 {
     }
 
     public void clearScreen() {
-        System.out.print("\033[H\033[2J"); System.out.flush();
+        System.out.print("\033[H\033[2J");
+        System.out.flush();
+        for (int[] arr : screen)
+            Arrays.fill(arr, (byte) 0);
     }
-
 
     public void init(String romPath) {
 
         try {
             // clear screen
-            for (int[] arr : screen)
-                Arrays.fill(arr, (byte) 0);
+            clearScreen();
 
             // clear stack and ram
             Arrays.fill(stack, (byte) 0); Arrays.fill(ram, (byte) 0);
@@ -121,7 +125,7 @@ public class Chip8 {
 
             key_pressed = false;
 
-            romLoader.loadRom(romPath, ram, Chip8Specs.PROGRAM_START_ADDR); printRAM(); romLoader = null;
+            romLoader.loadRom(romPath, ram, Chip8Specs.PROGRAM_START_ADDR);
 
         } catch (IOException e) {
             PRINT_LOGGER.log("Failed to read the ROM\n", ELogLevel.ERROR); throw new RuntimeException(e);
@@ -131,8 +135,13 @@ public class Chip8 {
     }
 
     public void run() throws IOException {
-        emulatorRunning = true; int lastOp = 0; while (emulatorRunning) {
-            cpu.fetch(); cpu.decode(); cpu.execute(); if (cpu.getPCregister() == lastOp) emulatorRunning = false;
+        emulatorRunning = true;
+        int lastOp = 0;
+        while (emulatorRunning) {
+            cpu.fetch();
+            cpu.decode();
+            cpu.execute();
+            if (cpu.getPCregister() == lastOp) emulatorRunning = false;
             lastOp = cpu.getPCregister();
         }
     }

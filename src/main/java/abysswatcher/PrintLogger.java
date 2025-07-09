@@ -12,8 +12,8 @@ public class PrintLogger extends ILogger {
     private PrintLogger() {}
 
     public void log(String message, ELogLevel logLevel) {
-        StringBuilder sb = new StringBuilder();
         if (logLevel.compareTo(this.logLevel) <= 0) {
+            StringBuilder sb = new StringBuilder();
             switch (logLevel) {
                 case ERROR -> sb.append("\u001B[31m[ERROR] ");
                 case WARN -> sb.append("\u001B[33m[WARN] ");

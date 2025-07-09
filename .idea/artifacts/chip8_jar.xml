@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="chip8:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/chip8_jar</output-path>
+    <root id="archive" name="chip8.jar">
+      <element id="module-output" name="chip8" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/annotations/26.0.2/annotations-26.0.2.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

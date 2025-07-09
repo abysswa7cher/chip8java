@@ -12,7 +12,7 @@ public class RomLoader {
 
     private static final PrintLogger PRINT_LOGGER = PrintLogger.getInstance();
 
-    public int loadRom(String path, int[] mem, int addr) throws IOException {
+    public void loadRom(String path, int[] mem, int addr) throws IOException {
         PRINT_LOGGER.log("Loading ROM: " + path, ELogLevel.INFO);
 
         File rom = new File(path);
@@ -37,7 +37,6 @@ public class RomLoader {
         PRINT_LOGGER.log(Arrays.toString(data), ELogLevel.DEBUG);
 
         System.arraycopy(data, 0, mem, addr, data.length);
-        return data.length;
     }
 
 }
