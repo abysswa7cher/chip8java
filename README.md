@@ -8,3 +8,11 @@ Example usage:
 ```bash
 java -jar chip8.jar -r "path/to/rom.ch8" -l 0
 ```
+Corax test:
+![](c8corax.png)
+
+Chip8 Test Suite logo:
+![](c8logo.png)
+
+IBM logo:
+![](c8ibm.png)
